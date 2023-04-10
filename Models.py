@@ -23,27 +23,34 @@ class ConvEncoder(nn.Module):
             nn.Conv1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, bias=False),
             nn.BatchNorm1d(hidden*(2**1), affine=True),
             nn.ReLU(inplace=True),
-            nn.Conv1d(hidden*(2**1), output_channel, 3, 2, 1, bias=True),
+            nn.Conv1d(hidden*(2**1), output_channel, 3, 2, 1, bias=False),
         )
 
     def forward(self, x):
         x = self.model(x)
         return x
+
+class ConvDecoder2(nn.Module):
+    def __init__(self) -> None:
+        super(ConvDecoder2, self).__init__()
+        self.model = nn.Sequential(
+            nn.Conv
+        )
     
 
 class ConvDecoder(nn.Module):
     def __init__(self, input_channel, hidden, output_channel):
         super(ConvDecoder, self).__init__()
         self.model = nn.Sequential(
-            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**0), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**0), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**0), input_channel, 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**0), input_channel, 3, 2, 1, 1, bias=False),
         )
 
     def forward(self, x):
@@ -55,15 +62,15 @@ class mlpEncoder(nn.Module):
     def __init__(self, input_channel, hidden, output_channel):
         super(mlpEncoder, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(input_channel, hidden*(2**0), bias=True),
+            nn.Linear(input_channel, hidden*(2**0), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**0), hidden*(2**1), bias=True),
+            nn.Linear(hidden*(2**0), hidden*(2**1), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**1), hidden*(2**2), bias=True),
+            nn.Linear(hidden*(2**1), hidden*(2**2), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**2), hidden*(2**1), bias=True),
+            nn.Linear(hidden*(2**2), hidden*(2**1), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**1), output_channel, bias=True),
+            nn.Linear(hidden*(2**1), output_channel, bias=False),
         )
 
     def forward(self, x):
@@ -75,15 +82,15 @@ class mlpDecoder(nn.Module):
     def __init__(self, input_channel, hidden, output_channel):
         super(mlpDecoder, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(output_channel, hidden*(2**1), bias=True),
+            nn.Linear(output_channel, hidden*(2**1), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**1), hidden*(2**2), bias=True),
+            nn.Linear(hidden*(2**1), hidden*(2**2), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**2), hidden*(2**1), bias=True),
+            nn.Linear(hidden*(2**2), hidden*(2**1), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**1), hidden*(2**0), bias=True),
+            nn.Linear(hidden*(2**1), hidden*(2**0), bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden*(2**0), input_channel, bias=True),
+            nn.Linear(hidden*(2**0), input_channel, bias=False),
         )
 
     def forward(self, x):
@@ -102,15 +109,48 @@ class TrAE(nn.Module):
         out = self.decoder(hidden)
         
         return out, hidden
+
+
+class TrVAE(nn.Module):
+    def __init__(self, encoder, decoder, args):
+        super(TrAE, self).__init__()
+        self.encoder = encoder(args.input_channel, args.t, args.t)
+        self.decoder = decoder(args.input_channel, args.t, args.output_channel)
+        
+        self.fc_mu = nn.Linear(args.t, args.output_channel)
+        self.fc_var = nn.Linear(args.t, args.output_channel)
+        
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5*log_var)
+        eps = torch.randn_like(std)
+        return mu + eps*std
+        
+    def forward(self, x):
+        hidden = self.encoder(x)
+        mu = self.fc_mu(hidden)
+        log_var = self.fc_var(hidden)
+        z = self.reparameterize(mu, log_var)
+        out = self.decoder(z)
+        
+        return out, mu, log_var
+
+
+BCE = nn.BCELoss(reduction='sum')
+def VAE_loss(x, recon_x, mu, log_var):
+    BCE_loss = BCE(recon_x, x.view(-1, 784))
+    KLD_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    return BCE_loss + KLD_loss 
     
 
 class Classifier(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, input_dim, output_dim):
         super(Classifier, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(input_dim, 128),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, output_dim),
+            nn.Linear(128, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, output_dim),
         )
 
     def forward(self, x):
