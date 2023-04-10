@@ -97,7 +97,7 @@ class Trajectory3Dnewset(Dataset):
                 tr[0] = 4000 - tr[0]
                 if self.model_type == 'A':
                     terminal = tr[-1].copy()
-                    terminal[3]=terminal[4]=terminal[5]=terminal[6]=terminal[7]=terminal[8]=terminal[12]=terminal[13]=terminal[14]=terminal[19]=terminal[20]=terminal[21]=terminal[22]=0
+                    # terminal[3]=terminal[4]=terminal[5]=terminal[6]=terminal[7]=terminal[8]=terminal[12]=terminal[13]=terminal[14]=terminal[19]=terminal[20]=terminal[21]=terminal[22]=0
                     tr = np.concatenate((tr, np.tile(terminal, (self.seq_len-len(tr), 1))), axis=0)
                     if i == 0: 
                         N = int(NSamples*5*0.7) if self.data_type == 'normal' else int(NSamples*0.7)
@@ -202,7 +202,7 @@ class Trajectory2Dset(Dataset):
                 tr = np.concatenate((states[i], np.insert(inputs[i], 0, 0).reshape(-1 ,1)), axis=1)
                 if self.model_type == 'A':
                     terminal = tr[-1].copy()
-                    terminal[2]=terminal[4]=0
+                    # terminal[2]=terminal[4]=0
                     tr = np.concatenate((tr, np.tile(terminal, (self.seq_len-len(tr), 1))), axis=0)
                     data_x_raw.append(tr)
                     data_y_raw.append(idx)
