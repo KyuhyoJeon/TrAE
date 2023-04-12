@@ -12,37 +12,30 @@ class ConvEncoder(nn.Module):
         super(ConvEncoder, self).__init__()
         self.model = nn.Sequential(
             nn.Conv1d(input_channel, hidden*(2**0), 3, 2, 1, bias=False),
-            nn.BatchNorm1d(hidden*(2**0), affine=True),
+            nn.BatchNorm1d(hidden*(2**0)),
             nn.ReLU(inplace=True),
             nn.Conv1d(hidden*(2**0), hidden*(2**1), 3, 2, 1, bias=False),
-            nn.BatchNorm1d(hidden*(2**1), affine=True),
+            nn.BatchNorm1d(hidden*(2**1)),
             nn.ReLU(inplace=True),
             nn.Conv1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, bias=False),
-            nn.BatchNorm1d(hidden*(2**2), affine=True),
+            nn.BatchNorm1d(hidden*(2**2)),
             nn.ReLU(inplace=True),
             nn.Conv1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, bias=False),
-            nn.BatchNorm1d(hidden*(2**1), affine=True),
+            nn.BatchNorm1d(hidden*(2**1)),
             nn.ReLU(inplace=True),
-            nn.Conv1d(hidden*(2**1), output_channel, 3, 2, 1, bias=False),
+            nn.Conv1d(hidden*(2**1), output_channel, 3, 1, 1, bias=False),
         )
 
     def forward(self, x):
         x = self.model(x)
         return x
-
-class ConvDecoder2(nn.Module):
-    def __init__(self) -> None:
-        super(ConvDecoder2, self).__init__()
-        self.model = nn.Sequential(
-            nn.Conv
-        )
     
 
 class ConvDecoder(nn.Module):
     def __init__(self, input_channel, hidden, output_channel):
         super(ConvDecoder, self).__init__()
         self.model = nn.Sequential(
-            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 2, 1, 1, bias=False),
+            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 1, 1, bias=False),
             nn.ReLU(inplace=True),
             nn.ConvTranspose1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
@@ -151,6 +144,18 @@ class Classifier(nn.Module):
             nn.Linear(128, 64),
             nn.ReLU(inplace=True),
             nn.Linear(64, output_dim),
+        )
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+    
+    
+class Classifier1L(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(Classifier1L, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, output_dim, bias=True),
         )
 
     def forward(self, x):
