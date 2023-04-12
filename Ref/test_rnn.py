@@ -149,7 +149,7 @@ train_label = []
 for inputs, labels in train_loader:
     inputs = inputs.to(device)
     labels = labels.to(device)
-    output = model(inputs)
+    output =  (inputs)
     prob = output.squeeze()
     pred = (prob > 0.5).float()
     acc = torch.mean((pred == labels).float())
