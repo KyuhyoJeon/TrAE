@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import torch
 import pickle
+import torch.nn.functional as F
 
 from torch.utils.data import Dataset, DataLoader
 
@@ -59,7 +60,7 @@ class Trajectory3Dset(Dataset):
         
         data_x_raw = []
         data_y_raw = []
-        
+        labels = np.eye(5)
         
         for i, tr_type in enumerate(['Normal', 'Burntime', 'Xcpposition', "ThrustTiltAngle", 'Finbias']):
             # if i == 0:
@@ -91,7 +92,8 @@ class Trajectory3Dset(Dataset):
                          'angEuler_1', 'angEuler_2', 'angEuler_3', 
                          'FinOut_1', 'FinOut_2', 'FinOut_3', 'FinOut_4', 
                          'FinCmd_1', 'FinCmd_2', 'FinCmd_3', 'FinCmd_4']].to_numpy()
-                tr[0] = 4000 - tr[0]
+                tr[:, 0] = 4000 - tr[:, 0]
+                tr = np.concatenate((tr, (np.arange(len(tr))).reshape(-1, 1)), axis=1)
                 if self.model_type == 'A':
                     terminal = tr[-1].copy()
                     # terminal[3]=terminal[4]=terminal[5]=terminal[6]=terminal[7]=terminal[8]=terminal[12]=terminal[13]=terminal[14]=terminal[19]=terminal[20]=terminal[21]=terminal[22]=0
@@ -99,10 +101,10 @@ class Trajectory3Dset(Dataset):
                     if i == 0: 
                         N = int(NSamples*5*0.7) if self.data_type == 'normal' and self.flag == 'train' else int(NSamples*0.7)
                         data_x_raw = [tr for _ in range(N)]
-                        data_y_raw = [i for _ in range(N)]
+                        data_y_raw = [labels[i] for _ in range(N)]
                     else:
                         data_x_raw.append(tr)
-                        data_y_raw.append(i)
+                        data_y_raw.append(labels[i])
                 else:
                     for idx in range(0, len(tr)-self.seq_len-self.pred_len+1, 1):
                         s_begin = idx
@@ -185,6 +187,7 @@ class Trajectory2Dset(Dataset):
         
         data_x_raw = []
         data_y_raw = []
+        labels = np.eye(5)
         
         for idx, tr_type in enumerate(Dataset):
             states = Dataset[tr_type]['states']
@@ -202,7 +205,7 @@ class Trajectory2Dset(Dataset):
                     # terminal[2]=terminal[4]=0
                     tr = np.concatenate((tr, np.tile(terminal, (self.seq_len-len(tr), 1))), axis=0)
                     data_x_raw.append(tr)
-                    data_y_raw.append(idx)
+                    data_y_raw.append(labels[idx])
                 else:
                     for idx in range(0, len(tr)-self.seq_len-self.pred_len+1, 1):
                         s_begin = idx

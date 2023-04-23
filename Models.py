@@ -23,7 +23,7 @@ class ConvEncoder(nn.Module):
             nn.Conv1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, bias=False),
             nn.BatchNorm1d(hidden*(2**1), affine=True),
             nn.ReLU(inplace=True),
-            nn.Conv1d(hidden*(2**1), output_channel, 3, 2, 1, bias=True),
+            nn.Conv1d(hidden*(2**1), output_channel, 3, 2, 1, bias=False),
         )
 
     def forward(self, x):
@@ -35,15 +35,15 @@ class ConvDecoder(nn.Module):
     def __init__(self, input_channel, hidden, output_channel):
         super(ConvDecoder, self).__init__()
         self.model = nn.Sequential(
-            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 2, 1, 1, bias=True),  # bias = False
+            nn.ConvTranspose1d(output_channel, hidden*(2**1), 3, 2, 1, 1, bias=False),  # bias = False
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**2), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**2), hidden*(2**1), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**0), 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**1), hidden*(2**0), 3, 2, 1, 1, bias=False),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(hidden*(2**0), input_channel, 3, 2, 1, 1, bias=True),
+            nn.ConvTranspose1d(hidden*(2**0), input_channel, 3, 2, 1, 1, bias=False),
         )
 
     def forward(self, x):
@@ -139,11 +139,11 @@ class Classifier(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(Classifier, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 128),
+            nn.Linear(input_dim, 256, bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(128, 32),
+            nn.Linear(256, 128, bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(32, output_dim),
+            nn.Linear(128, output_dim, bias=False),
         )
 
     def forward(self, x):
