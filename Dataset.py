@@ -60,7 +60,7 @@ class Trajectory3Dset(Dataset):
         
         data_x_raw = []
         data_y_raw = []
-        labels = np.eye(5)
+        labels = np.eye(self.class_num)
         
         for i, tr_type in enumerate(['Normal', 'Burntime', 'Xcpposition', "ThrustTiltAngle", 'Finbias']):
             # if i == 0:
@@ -99,7 +99,7 @@ class Trajectory3Dset(Dataset):
                     # terminal[3]=terminal[4]=terminal[5]=terminal[6]=terminal[7]=terminal[8]=terminal[12]=terminal[13]=terminal[14]=terminal[19]=terminal[20]=terminal[21]=terminal[22]=0
                     tr = np.concatenate((tr, np.tile(terminal, (self.seq_len-len(tr), 1))), axis=0)
                     if i == 0: 
-                        N = int(NSamples*5*0.7) if self.data_type == 'normal' and self.flag == 'train' else int(NSamples*0.7)
+                        N = int(NSamples*5*self.ratio[d_type[self.flag]]*0.1) if self.data_type == 'normal' and self.flag == 'train' else int(NSamples*self.ratio[d_type[self.flag]]*0.1)
                         data_x_raw = [tr for _ in range(N)]
                         data_y_raw = [labels[i] for _ in range(N)]
                     else:
@@ -187,7 +187,7 @@ class Trajectory2Dset(Dataset):
         
         data_x_raw = []
         data_y_raw = []
-        labels = np.eye(5)
+        labels = np.eye(self.class_num)
         
         for idx, tr_type in enumerate(Dataset):
             states = Dataset[tr_type]['states']

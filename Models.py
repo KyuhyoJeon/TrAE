@@ -150,14 +150,17 @@ class Classifier(nn.Module):
         x = self.model(x)
         return x
     
-# class Classifier(nn.Module):
-#     def __init__(self, input_dim, output_dim):
-#         super(Classifier, self).__init__()
-#         self.model = nn.Linear(input_dim, output_dim)
+    
+class E2E_Classifier(nn.Module):
+    def __init__(self, args):
+        super(E2E_Classifier, self).__init__()
+        self.encoder = ConvEncoder(args.input_channel, args.t, args.output_channel)
+        self.fc = Classifier(args.seq_len//(2**args.layer_num)*args.output_channel, args.class_num)
 
-#     def forward(self, x):
-#         x = self.model(x)
-#         return x
+    def forward(self, x):
+        hidden = self.encoder(x)
+        out = self.fc(hidden.reshape(hidden.size(0), -1))
+        return out
 
 
 class TrLSTM(nn.Module):
